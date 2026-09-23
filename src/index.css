@@ -1,0 +1,154 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ANSI-style terminal theme. Color carries meaning:
+   blue = paths/links, amber = prompt/cursor, green = success/status,
+   red = errors, violet = highlights. */
+:root {
+  --ink: #eef1f6;
+  --surface: #ffffff;
+  --line: #d5dbe7;
+  --fog: #1a2133;
+  --mute: #5a6480;
+  --blue: #2d5bd0;
+  --amber: #9a5b00;
+  --green: #3b7a1e;
+  --red: #c4304f;
+  --violet: #7a4fd6;
+}
+
+:root.dark {
+  --ink: #0e1422;
+  --surface: #161e30;
+  --line: #26304a;
+  --fog: #e4e8f1;
+  --mute: #8e98b0;
+  --blue: #7aa2f7;
+  --amber: #f0b45c;
+  --green: #9ece6a;
+  --red: #f7768e;
+  --violet: #bb9af7;
+}
+
+@theme inline {
+  --breakpoint-sm: 700px;
+  --breakpoint-md: 850px;
+  --breakpoint-lg: 1280px;
+
+  --color-ink: var(--ink);
+  --color-surface: var(--surface);
+  --color-line: var(--line);
+  --color-fog: var(--fog);
+  --color-mute: var(--mute);
+  --color-blue: var(--blue);
+  --color-amber: var(--amber);
+  --color-green: var(--green);
+  --color-red: var(--red);
+  --color-violet: var(--violet);
+
+  --font-mono: "Martian Mono Variable", ui-monospace, SFMono-Regular, "SF Mono",
+    Menlo, Consolas, "Liberation Mono", monospace;
+  --font-sans: "Instrument Sans Variable", ui-sans-serif, system-ui,
+    -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+html,
+body,
+#root,
+.app {
+  height: 100%;
+  width: 100%;
+}
+
+html {
+  scroll-behavior: smooth;
+  /* Sticky navbar height + breathing room for in-page anchors. */
+  scroll-padding-top: 5rem;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--ink);
+  color: var(--fog);
+  font-size: 1rem;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Custom cursor replaces the native one only where a real pointer exists. */
+@media (pointer: fine) {
+  .app,
+  .app button,
+  .app a {
+    cursor: none;
+  }
+}
+
+/* The terminal caret must stay visible even with the custom cursor. */
+.app input,
+.app textarea {
+  cursor: text;
+}
+
+/* :where() keeps this at zero specificity, so a component that styles its own
+   focus (outline-none on the palette's search field) actually wins. */
+:where(:focus-visible) {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Thin scrollbars, so an overflowing panel doesn't get a fat grey bar across
+   its rounded corner. */
+.scroll-slim {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+.scroll-slim::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scroll-slim::-webkit-scrollbar-thumb {
+  background-color: var(--line);
+  border-radius: 3px;
+}
+
+.scroll-slim::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--violet) 35%, transparent);
+}
+
+/* Circular theme reveal. Both layers sit still so only the new one is clipped. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+  z-index: 0;
+}
+
+::view-transition-new(root) {
+  z-index: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
