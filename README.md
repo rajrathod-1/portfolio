@@ -101,6 +101,14 @@ src/
 - **Lucide React** - Icon library
 - **React Icons** - Additional icon sets
 
+## 🙏 Credits
+
+- The cursor-following cat is a React port of [oneko.js](https://github.com/adryd325/oneko.js)
+  by adryd, MIT licensed. The sprite sheet (`public/oneko.gif`) comes from that
+  project; a copy of its licence is in [`licenses/`](licenses/oneko.js-LICENSE.txt).
+- The Citi logo is the official mark, via
+  [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Citi.svg).
+
 ## 📝 License
 
 This project is open source and available for personal use.

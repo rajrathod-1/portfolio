@@ -1,3 +1,29 @@
+/*
+ * Neko: a React port of oneko.js by adryd — https://github.com/adryd325/oneko.js
+ * The sprite sheet (public/oneko.gif) and the sprite/animation tables below are
+ * taken from that project.
+ *
+ * Copyright © 2022 adryd
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 import React, { useEffect, useRef } from 'react';
 
 const Neko: React.FC = () => {
@@ -224,7 +250,7 @@ const Neko: React.FC = () => {
         pointerEvents: 'none',
         imageRendering: 'pixelated',
         zIndex: 9999,
-        backgroundImage: 'url("https://raw.githubusercontent.com/adryd325/oneko.js/main/oneko.gif")',
+        backgroundImage: 'url("/oneko.gif")',
         transform: 'scale(1.25)',
         transformOrigin: 'center center',
       }}
