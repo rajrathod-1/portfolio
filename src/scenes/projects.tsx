@@ -2,6 +2,7 @@ import React, { useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Grid, List } from "lucide-react";
 import ProjectDiagram from "@/components/ProjectDiagram";
+import LiveOrderBook from "@/components/LiveOrderBook";
 import { projects, type Project } from "@/lib/projects";
 import { useFinePointer } from "@/lib/useMediaQuery";
 
@@ -144,14 +145,26 @@ const ProjectCard: React.FC<{
         className={`flex h-full flex-col ${featured ? "lg:flex-row" : ""}`}
       >
         <PaneHeader project={project} className={featured ? "lg:hidden" : ""} />
-        <ProjectDiagram
-          id={project.id}
-          className={
-            featured
-              ? "h-44 border-b border-line lg:h-auto lg:min-h-[16rem] lg:w-[40%] lg:shrink-0 lg:border-b-0 lg:border-r"
-              : "h-32 border-b border-line"
-          }
-        />
+        {project.live ? (
+          <div
+            className={
+              featured
+                ? "h-56 border-b border-line lg:h-auto lg:min-h-[20rem] lg:w-[45%] lg:shrink-0 lg:border-b-0 lg:border-r"
+                : "h-40 border-b border-line"
+            }
+          >
+            <LiveOrderBook />
+          </div>
+        ) : (
+          <ProjectDiagram
+            id={project.id}
+            className={
+              featured
+                ? "h-44 border-b border-line lg:h-auto lg:min-h-[16rem] lg:w-[40%] lg:shrink-0 lg:border-b-0 lg:border-r"
+                : "h-32 border-b border-line"
+            }
+          />
+        )}
 
         <div className="flex flex-1 flex-col p-4 sm:p-5">
           {featured && (
@@ -317,10 +330,16 @@ const Projects: React.FC = () => {
                   <SpotlightPane>
                     <article className="flex h-full flex-col">
                       <PaneHeader project={project} />
-                      <ProjectDiagram
-                        id={project.id}
-                        className="h-56 border-b border-line"
-                      />
+                      {project.live ? (
+                        <div className="h-72 border-b border-line">
+                          <LiveOrderBook />
+                        </div>
+                      ) : (
+                        <ProjectDiagram
+                          id={project.id}
+                          className="h-56 border-b border-line"
+                        />
+                      )}
 
                       <div className="p-5 sm:p-7">
                         <h3 className="mb-3 font-mono text-xl font-semibold text-fog md:text-2xl">

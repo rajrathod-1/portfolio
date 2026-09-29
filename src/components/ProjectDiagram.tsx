@@ -106,8 +106,8 @@ const Frame: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   </svg>
 );
 
-/** LLM agent loop: tools on one side, retrieval and cache on the other. */
-const AgenticDiagram: React.FC = () => (
+/** RAG service: retrieval and the model behind a tool-use layer. */
+const RagDiagram: React.FC = () => (
   <Frame>
     <title>Agent loop calling tools, a vector index and a cache</title>
     <Box x={10} y={62} w={64} label="request" />
@@ -118,7 +118,7 @@ const AgenticDiagram: React.FC = () => (
     <Box x={214} y={24} w={94} label="tool layer" />
 
     <Arrow x1={182} y1={75} x2={212} y2={75} />
-    <Box x={214} y={62} w={94} label="RAG / FAISS" accent="blue" />
+    <Box x={214} y={62} w={94} label="FAISS index" accent="blue" />
 
     <Arrow x1={182} y1={82} x2={212} y2={112} />
     <Box x={214} y={100} w={94} label="redis cache" />
@@ -129,52 +129,54 @@ const AgenticDiagram: React.FC = () => (
   </Frame>
 );
 
-/** GraphQL entry point, event-driven services, document store. */
-const CommerceDiagram: React.FC = () => (
+/** Source text through parsing, inference and evaluation. */
+const InterpreterDiagram: React.FC = () => (
   <Frame>
-    <title>GraphQL gateway over event-driven services and MongoDB</title>
-    <Box x={10} y={38} w={64} label="clients" />
+    <title>Source through parser, type inference and evaluator</title>
+    <Box x={10} y={38} w={64} label="source" />
     <Arrow x1={76} y1={51} x2={100} y2={51} />
-    <Box x={102} y={38} w={84} label="GraphQL" accent="blue" />
+    <Box x={102} y={38} w={84} label="parser" accent="blue" />
     <Arrow x1={188} y1={51} x2={214} y2={51} />
-    <Box x={216} y={38} w={92} label="services" />
+    <Box x={216} y={38} w={92} label="AST" />
 
     <Arrow x1={262} y1={66} x2={262} y2={96} />
-    <Box x={216} y={98} w={92} label="MongoDB" />
+    <Box x={216} y={98} w={92} label="evaluator" />
 
     <Arrow x1={144} y1={66} x2={144} y2={96} dashed />
-    <Box x={102} y={98} w={84} label="event bus" accent="violet" />
+    <Box x={102} y={98} w={84} label="infer types" accent="violet" />
 
-    <Caption x={10} y={106} text="catalog +" />
-    <Caption x={10} y={118} text="orders" />
+    <Caption x={10} y={106} text="rejected" />
+    <Caption x={10} y={118} text="before it runs" />
   </Frame>
 );
 
-/** Redirect hot path: cache first, database on miss, analytics alongside. */
-const ShortenerDiagram: React.FC = () => (
+/** Clients through the proxy to backends, with telemetry on the side. */
+const ProxyDiagram: React.FC = () => (
   <Frame>
-    <title>Redirect path through a cache to DynamoDB, with analytics</title>
-    <Box x={10} y={62} w={62} label="redirect" />
+    <title>Clients through a multithreaded proxy to backend servers</title>
+    <Box x={10} y={62} w={62} label="clients" />
     <Arrow x1={74} y1={75} x2={98} y2={75} />
-    <Box x={100} y={62} w={74} label="EC2 pool" accent="blue" />
+    <Box x={100} y={62} w={74} label="L4 proxy" accent="blue" />
 
     <Arrow x1={176} y1={70} x2={210} y2={40} />
-    <Box x={212} y={26} w={96} label="redis (hot)" accent="amber" />
+    <Box x={212} y={26} w={96} label="backend a" />
 
-    <Arrow x1={176} y1={82} x2={210} y2={110} dashed />
-    <Box x={212} y={98} w={96} label="DynamoDB" />
+    <Arrow x1={176} y1={75} x2={210} y2={75} />
+    <Box x={212} y={62} w={96} label="backend b" />
 
-    <Caption x={212} y={18} text="hit" />
-    <Caption x={212} y={132} text="miss · sub-10ms" />
-    <Caption x={10} y={110} text="100K+" />
-    <Caption x={10} y={122} text="redirects" />
+    <Arrow x1={137} y1={90} x2={137} y2={112} dashed />
+    <Box x={95} y={114} w={84} label="telemetry" accent="amber" h={22} />
+
+    <Caption x={212} y={104} text="round robin" />
+    <Caption x={10} y={110} text="epoll," />
+    <Caption x={10} y={122} text="thread pool" />
   </Frame>
 );
 
 const DIAGRAMS: Record<string, React.FC> = {
-  agentic: AgenticDiagram,
-  commerce: CommerceDiagram,
-  shortener: ShortenerDiagram,
+  rag: RagDiagram,
+  interpreter: InterpreterDiagram,
+  proxy: ProxyDiagram,
 };
 
 const ProjectDiagram: React.FC<{ id: string; className?: string }> = ({

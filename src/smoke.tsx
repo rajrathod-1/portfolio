@@ -49,8 +49,12 @@ check(
   projects.filter((p) => p.featured).length === 1
 );
 check(
-  "every project has a repo link",
-  projects.every((p) => !!p.repo?.href)
+  "the shipped project links to its repo",
+  projects.filter((p) => p.repo?.href).length >= 1
+);
+check(
+  "the featured project drives the live panel",
+  projects.find((p) => p.featured)?.live === true
 );
 for (const tool of ["Spring Boot", "Apache Kafka", "Elasticsearch"]) {
   inHtml(`tool ${tool}`, tool);

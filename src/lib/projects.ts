@@ -1,6 +1,6 @@
 export interface Project {
   /** Also selects the architecture sketch in ProjectDiagram. */
-  id: "agentic" | "commerce" | "shortener";
+  id: "orderbook" | "interpreter" | "rag" | "proxy";
   title: string;
   /** Shown in the pane's header tab. */
   file: string;
@@ -12,30 +12,53 @@ export interface Project {
   tags: string[];
   demo?: { label: string; href: string };
   repo?: { label: string; href: string };
+  /** Renders the live 3D order book in place of the static sketch. */
+  live?: boolean;
   featured?: boolean;
 }
 
 export const projects: Project[] = [
   {
-    id: "agentic",
-    title: "Agentic Content Generation System",
-    file: "agentic-content-system/README.md",
-    period: "Jan 2026 - April 2026",
+    id: "orderbook",
+    title: "Limit Order Book and Matching Engine",
+    file: "order-book/README.md",
+    period: "Sep 2026 - Present",
     summary:
-      "An enterprise agent system: LLMs with a tool-use layer over a retrieval pipeline, benchmarked on quality, latency and cost.",
+      "A price-time priority matching engine in C++, tested by diffing every fill against a deliberately simple Python reference.",
     bullets: [
-      "Designed and shipped a production-grade enterprise agent system integrating LLMs with a tool-use layer and an information retrieval (RAG) pipeline, supporting multi-step workflows and automated failure recovery.",
-      "Built evaluation infrastructure benchmarking model variants across quality, latency, and cost; achieved sub-200ms p95 response times via Redis caching and A/B tested endpoints across 3 model variants.",
+      "Building a price-time priority matching engine in C++ supporting limit, market, and cancel orders, with sorted price levels and an order-id index so cancels do not scan the book.",
+      "Testing it by replaying randomly generated order streams against a deliberately simple reference implementation in Python and diffing every fill; this catches partial-fill and cancel edge cases that hand-written unit tests missed.",
     ],
-    tags: [
-      "Python",
-      "Flask",
-      "OpenAI API",
-      "LangChain",
-      "RAG",
-      "FAISS",
-      "Redis",
+    tags: ["C++", "Python"],
+    live: true,
+    featured: true,
+  },
+  {
+    id: "interpreter",
+    title: "Interpreter for a Small Functional Language",
+    file: "interpreter/README.md",
+    period: "Aug 2026 - Present",
+    summary:
+      "A parser and evaluator with closures, algebraic data types and pattern matching, plus Hindley-Milner type inference.",
+    bullets: [
+      "Writing a parser and evaluator for a language with closures, algebraic data types, and pattern matching.",
+      "Adding Hindley-Milner type inference so ill-typed programs are rejected before they run, with errors that point at the offending expression; each example program is checked against its expected output.",
     ],
+    tags: ["Python"],
+  },
+  {
+    id: "rag",
+    title: "Retrieval-Augmented Question Answering Service",
+    file: "rag-service/README.md",
+    period: "Jan 2026 - Apr 2026",
+    summary:
+      "Answers questions over a user-supplied corpus with embeddings, FAISS and an LLM, with a tool-use layer and an evaluation harness.",
+    bullets: [
+      "Built and deployed a service that answers questions over a user-supplied corpus using embeddings, FAISS, and an LLM.",
+      "Added a tool-use layer so the model can choose between searching the corpus and answering directly, with automatic recovery when a step fails.",
+      "Timed every stage before optimizing and found retrieval, not the model call, was the bottleneck; caching brought p95 latency under 200ms. Built an evaluation harness after noticing bad retrieval produced answers that looked right but were not.",
+    ],
+    tags: ["Python", "Flask", "FAISS", "Redis"],
     demo: {
       label: "Live demo",
       href: "https://ai-content-generation-tan.vercel.app",
@@ -44,42 +67,19 @@ export const projects: Project[] = [
       label: "GitHub",
       href: "https://github.com/rajrathod-1/AI-Content-Generation",
     },
-    featured: true,
   },
   {
-    id: "commerce",
-    title: "E-Commerce Marketplace Backend",
-    file: "ecommerce-backend/README.md",
-    period: "Sept 2025 - Dec 2025",
+    id: "proxy",
+    title: "TCP Proxy Server",
+    file: "tcp-proxy/README.md",
+    period: "Sep 2025 - Dec 2025",
     summary:
-      "Event-driven marketplace services with GraphQL for client data fetching and MongoDB for the product catalog.",
+      "A multithreaded Layer 4 proxy on Linux with event-driven I/O, routing, load balancing and per-connection telemetry.",
     bullets: [
-      "Architected event-driven backend services for a consumer-focused e-commerce marketplace, utilizing GraphQL for optimized client data fetching and MongoDB for flexible product catalog storage.",
-      "Accelerated development lifecycle by 30% leveraging AI-enhanced tools like GitHub Copilot and Cursor for code generation, ensuring clean code practices and comprehensive unit testing.",
+      "Wrote a multithreaded Layer 4 TCP proxy on Linux handling concurrent connections with event-driven, asynchronous I/O, plus simple routing and load balancing.",
+      "Added per-connection telemetry and tested under sustained load to see where throughput dropped and why.",
     ],
-    tags: [
-      "Java",
-      "Kotlin",
-      "GraphQL",
-      "MongoDB",
-      "GitHub Copilot",
-      "Cursor",
-    ],
-    repo: { label: "GitHub", href: "https://github.com/rajrathod-1" },
-  },
-  {
-    id: "shortener",
-    title: "Distributed URL Shortener & Analytics Service",
-    file: "url-shortener/README.md",
-    period: "Jan 2024 - Apr 2024",
-    summary:
-      "A distributed system on AWS serving 100K+ redirects, with a cached hot path and a click-through analytics backend.",
-    bullets: [
-      "Applied large-scale system design to deploy a distributed system on AWS handling 100K+ URL redirects, using DynamoDB for sub-10ms lookups and Redis for hot-path caching across scaled EC2 instances.",
-      "Built an analytics backend exposing click-through metrics with A/B redirect testing; containerized with Docker and deployed via CI/CD pipeline with full end-to-end observability.",
-    ],
-    tags: ["Python", "AWS EC2", "AWS S3", "DynamoDB", "Redis", "Docker"],
-    repo: { label: "GitHub", href: "https://github.com/rajrathod-1" },
+    tags: ["C++", "POSIX Sockets", "Linux"],
   },
 ];
 
@@ -105,7 +105,7 @@ Tech: React, TypeScript, Framer Motion, Tailwind CSS
 • Implemented custom cursor with Neko cat follower
 • Tab completion and command history for command-line navigation
 • Command palette on ${"⌘"}K, with a circular theme reveal
-• Dark mode support with smooth animations`;
+• Playable snake, and a live 3D order book for the matching engine`;
 
   return files;
 }
