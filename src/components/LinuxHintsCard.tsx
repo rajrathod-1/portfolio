@@ -32,7 +32,7 @@ const Kbd: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 /** A quiet reference panel beside the terminal. Nothing here animates. */
 const LinuxHintsCard: React.FC<LinuxHintsCardProps> = ({ className = "" }) => (
   <div
-    className={`rounded-xl border border-line bg-surface/85 p-4 backdrop-blur-md ${className}`}
+    className={`rounded-xl border border-line bg-surface p-4 ${className}`}
   >
     <p className="mb-3 font-mono text-[0.7rem] tracking-wide text-mute">
       Try typing

@@ -157,7 +157,7 @@ const Hero: React.FC = () => {
               ? undefined
               : { rotateX, rotateY, transformStyle: "preserve-3d" }
           }
-          className="w-full overflow-hidden rounded-xl border border-line bg-surface/90 backdrop-blur-md shadow-[0_1px_2px_rgba(0,0,0,0.08),0_12px_32px_-12px_rgba(0,0,0,0.35)]"
+          className="w-full overflow-hidden rounded-xl border border-line bg-surface shadow-[0_1px_2px_rgba(0,0,0,0.08),0_12px_32px_-12px_rgba(0,0,0,0.35)]"
         >
           {/* Title bar */}
           <div className="flex items-center justify-between border-b border-line px-4 py-2.5">

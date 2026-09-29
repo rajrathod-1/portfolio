@@ -38,7 +38,7 @@ const Connect: React.FC = () => (
     {/* The oversized circle that lifts the footer off the page background. */}
     <div
       aria-hidden="true"
-      className="absolute inset-0 z-0 border-t border-line bg-surface/80 backdrop-blur-md"
+      className="absolute inset-0 z-0 border-t border-line bg-surface"
       style={{
         left: "50%",
         transform: "translateX(-50%)",

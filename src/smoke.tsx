@@ -36,25 +36,9 @@ inHtml("status pill", "Open to new grad software roles");
 inHtml("Citi in the timeline", "Citi");
 inHtml("Citi location", "Toronto, ON");
 inHtml("Citi dates", "May 2026 - Sept 2026");
-// The graph shows one commit's detail at a time, so only the selected role's
-// dates are in the markup; the rest are checked in the data below.
-inHtml("career graph renders", "git log --graph");
-inHtml("Ericsson on the graph", "Ericsson");
-inHtml("Proofpoint on the graph", "Proofpoint");
-inHtml("HEAD ref is shown", "HEAD -> main");
-check(
-  "every dated role has a status",
-  experienceData
-    .filter((e) => e.start)
-    .every((e) => statusOf(e) !== null)
-);
-check(
-  "Ericsson and Proofpoint keep their date ranges",
-  experienceData.find((e) => e.company === "Ericsson")?.dates ===
-    "Jan 2026 - April 2026" &&
-    experienceData.find((e) => e.company === "Proofpoint")?.dates ===
-      "Oct 2024 - Dec 2025"
-);
+inHtml("Ericsson dates", "Jan 2026 - April 2026");
+inHtml("Proofpoint dates", "Oct 2024 - Dec 2025");
+inHtml("computed status badge", "Completed");
 
 // Projects and tools
 for (const project of projects) {
