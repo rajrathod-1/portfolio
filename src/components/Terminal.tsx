@@ -4,6 +4,7 @@ import { fileSystem, neofetchLines, treeLines } from "@/lib/filesystem";
 import { SITE, downloadResume } from "@/lib/site";
 import { getTheme, setTheme } from "@/lib/theme";
 import { FOCUS_TERMINAL_EVENT } from "@/lib/events";
+import SnakeGame from "@/components/SnakeGame";
 
 interface CommandOutput {
   command: string;
@@ -23,6 +24,7 @@ const COMMANDS = [
   "history",
   "theme",
   "resume",
+  "snake",
 ];
 
 const ERROR_PATTERN =
@@ -66,6 +68,7 @@ const TerminalNavigation: React.FC = () => {
   const [currentDirectory, setCurrentDirectory] = useState("~");
   const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
   const [historyIndex, setHistoryIndex] = useState<number | null>(null);
+  const [playingSnake, setPlayingSnake] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   /** Just the commands typed this session, for ↑/↓ and `history`. */
@@ -171,6 +174,7 @@ const TerminalNavigation: React.FC = () => {
           "  history         - List commands from this session",
           "  theme [light|dark] - Switch the site theme",
           "  resume          - Download my resume",
+          "  snake           - Play snake without leaving the page",
           "",
           "Directories: experience/, projects/, technologies/, contact/",
           "",
@@ -360,6 +364,11 @@ const TerminalNavigation: React.FC = () => {
         ];
         break;
 
+      case "snake":
+        setPlayingSnake(true);
+        output = ["Starting snake. Arrows or wasd to steer, q to quit."];
+        break;
+
       default:
         output = [
           `bash: ${command}: command not found`,
@@ -522,6 +531,8 @@ const TerminalNavigation: React.FC = () => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
+      // Snake is running: it has its own keyboard handler.
+      if (playingSnake) return;
 
       // Never steal keystrokes from a real field: the prompt itself, the
       // command palette's search box, anything else focused.
@@ -588,7 +599,7 @@ const TerminalNavigation: React.FC = () => {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
      
-  }, [selectedIndex, isComplete, options, terminalMode]);
+  }, [selectedIndex, isComplete, options, terminalMode, playingSnake]);
 
   if (isComplete && terminalMode === "navigation" && !commandHistory.length) {
     return (
@@ -629,7 +640,24 @@ const TerminalNavigation: React.FC = () => {
         ))}
       </div>
 
-      {terminalMode === "command" && (
+      {playingSnake && (
+        <SnakeGame
+          onQuit={(score) => {
+            setPlayingSnake(false);
+            setCommandHistory((prev) => [
+              ...prev,
+              {
+                command: "snake",
+                output: [`Thanks for playing. Final score: ${score}.`],
+                directory: currentDirectory,
+              },
+            ]);
+            setTimeout(() => inputRef.current?.focus(), 0);
+          }}
+        />
+      )}
+
+      {terminalMode === "command" && !playingSnake && (
         <div className="mb-4 flex items-center gap-x-1">
           <Prompt directory={currentDirectory} />
           <label htmlFor="terminal-input" className="sr-only">

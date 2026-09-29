@@ -14,6 +14,7 @@ const COMMANDS: { cmd: string; hint: string }[] = [
   { cmd: "history", hint: "what you have typed" },
   { cmd: "theme dark", hint: "switch the theme" },
   { cmd: "resume", hint: "download my resume" },
+  { cmd: "snake", hint: "play a game" },
 ];
 
 const KEYS: { keys: string; hint: string }[] = [
