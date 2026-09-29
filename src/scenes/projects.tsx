@@ -117,7 +117,7 @@ const SpotlightPane: React.FC<{
         dimmed ? "opacity-50" : "opacity-100"
       } ${className}`}
     >
-      <div className="h-full overflow-hidden rounded-[11px] bg-surface">
+      <div className="h-full overflow-hidden rounded-[11px] bg-surface/85 backdrop-blur-md">
         {children}
       </div>
     </div>

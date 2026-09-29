@@ -153,7 +153,7 @@ const Experience: React.FC = () => {
         <SectionHeading path="~/experience" label="Experience" />
       </div>
 
-      <div className="rounded-2xl border border-line bg-surface p-4 sm:p-6 lg:p-8">
+      <div className="rounded-2xl border border-line bg-surface/85 p-4 backdrop-blur-md sm:p-6 lg:p-8">
         {/* Chart: pointer-driven, and mirrored by the list below for keyboard
             and small screens. */}
         <div className="hidden sm:block" aria-hidden="true" ref={chartRef}>
