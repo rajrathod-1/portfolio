@@ -1,15 +1,5 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import {
-  Area,
-  CartesianGrid,
-  ComposedChart,
-  ResponsiveContainer,
-  Scatter,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 import SectionHeading from "@/components/SectionHeading";
 import {
   experienceData,
@@ -17,8 +7,19 @@ import {
   type ExperienceEntry,
   type Status,
 } from "@/lib/experience";
+import { projects } from "@/lib/projects";
+import {
+  buildCareerGraph,
+  formatDate,
+  type GraphNode,
+  type ProjectInput,
+  type RoleInput,
+} from "@/lib/career-graph";
 import { useFinePointer } from "@/lib/useMediaQuery";
-import { ACTIVE_BUMP, DOMAIN, MARGIN, badgeRadius } from "@/lib/chart";
+
+const ROW_HEIGHT = 34;
+const LANE_WIDTH = 18;
+const GRAPH_LEFT = 12;
 
 const STATUS_CLASS: Record<Status, string> = {
   Current: "border-green/40 text-green",
@@ -34,368 +35,318 @@ const StatusBadge: React.FC<{ status: Status }> = ({ status }) => (
   </span>
 );
 
-/** Company logos sit on a light plate so every brand stays legible in both themes. */
-const LogoBadge: React.FC<{
-  cx: number;
-  cy: number;
-  entry: ExperienceEntry;
-  active: boolean;
-  radius: number;
-  onSelect: () => void;
-  onHover: (entry: ExperienceEntry | null) => void;
-}> = ({ cx, cy, entry, active, radius, onSelect, onHover }) => {
-  const r = active ? radius + ACTIVE_BUMP : radius;
-  // Wordmarks are wider than they are tall, so the image box is a rectangle
-  // rather than the inscribed square: it fills far more of the circle.
-  const boxWidth = r * 1.55;
-  const boxHeight = r * 1.15;
+const laneX = (lane: number) => GRAPH_LEFT + lane * LANE_WIDTH;
+const rowY = (row: number) => row * ROW_HEIGHT + ROW_HEIGHT / 2;
+
+/**
+ * The rails behind the commits: the trunk, and a curved branch per project
+ * that leaves main where the work started and rejoins where it finished.
+ */
+const GraphRails: React.FC<{
+  graph: ReturnType<typeof buildCareerGraph>;
+  activeId: string | null;
+}> = ({ graph, activeId }) => {
+  const height = graph.rows.length * ROW_HEIGHT;
+  const width = laneX(graph.laneCount) + 8;
 
   return (
-    <g
-      style={{ cursor: "pointer" }}
-      onClick={onSelect}
-      onMouseEnter={() => onHover(entry)}
-      onMouseLeave={() => onHover(null)}
+    <svg
+      aria-hidden="true"
+      width={width}
+      height={height}
+      className="shrink-0"
+      style={{ minWidth: width }}
     >
-      <circle
-        cx={cx}
-        cy={cy}
-        r={r}
-        fill="#ffffff"
-        stroke={active ? "var(--amber)" : "var(--line)"}
-        strokeWidth={active ? 2.5 : 1.5}
+      {/* main */}
+      <line
+        x1={laneX(0)}
+        y1={rowY(0)}
+        x2={laneX(0)}
+        y2={rowY(graph.rows.length - 1)}
+        stroke="var(--line)"
+        strokeWidth={1.5}
       />
-      {entry.image ? (
-        <image
-          href={entry.image}
-          x={cx - boxWidth / 2}
-          y={cy - boxHeight / 2}
-          width={boxWidth}
-          height={boxHeight}
-          preserveAspectRatio="xMidYMid meet"
-        />
-      ) : (
-        <text
-          x={cx}
-          y={cy + r * 0.35}
-          textAnchor="middle"
-          fontSize={r}
-          fill="#5a6480"
-          fontFamily="monospace"
-        >
-          ?
-        </text>
-      )}
-    </g>
+
+      {graph.branches.map((branch) => {
+        const x = laneX(branch.lane);
+        const top = rowY(branch.fromRow);
+        const bottom = rowY(branch.toRow);
+        const active = activeId === branch.id;
+        const stroke = active ? "var(--violet)" : "var(--line)";
+
+        // Diverge from main at the bottom, and merge back at the top unless
+        // the work is still going.
+        const d = [
+          `M ${laneX(0)} ${bottom}`,
+          `C ${x} ${bottom}, ${x} ${bottom - ROW_HEIGHT / 2}, ${x} ${bottom - ROW_HEIGHT / 2}`,
+          `L ${x} ${top + (branch.open ? 0 : ROW_HEIGHT / 2)}`,
+          branch.open
+            ? ""
+            : `C ${x} ${top}, ${laneX(0)} ${top}, ${laneX(0)} ${top}`,
+        ].join(" ");
+
+        return (
+          <g key={branch.id}>
+            <path
+              d={d}
+              fill="none"
+              stroke={stroke}
+              strokeWidth={active ? 2 : 1.5}
+              strokeDasharray={branch.open ? "3 3" : undefined}
+            />
+            {branch.open && (
+              // An unmerged tip, the way git draws a branch that is still open.
+              <circle cx={x} cy={top - 4} r={2} fill="var(--violet)" />
+            )}
+          </g>
+        );
+      })}
+
+      {graph.rows.map((node, i) => {
+        const active = activeId === node.id;
+        const isRole = node.kind === "role";
+        return (
+          <circle
+            key={node.id}
+            cx={laneX(node.lane)}
+            cy={rowY(i)}
+            r={active ? 6 : isRole ? 5 : 4}
+            fill={active ? "var(--amber)" : "var(--ink)"}
+            stroke={
+              active
+                ? "var(--amber)"
+                : isRole
+                  ? "var(--blue)"
+                  : "var(--violet)"
+            }
+            strokeWidth={2}
+          />
+        );
+      })}
+    </svg>
   );
 };
 
-interface TooltipPayload {
-  payload: ExperienceEntry;
-}
-
-const ChartTooltip: React.FC<{
-  active?: boolean;
-  payload?: TooltipPayload[];
-}> = ({ active, payload }) => {
-  if (!active || !payload?.length) return null;
-  const entry = payload[0].payload;
+const CommitDetail: React.FC<{
+  node: GraphNode;
+  entry?: ExperienceEntry;
+}> = ({ node, entry }) => {
+  const project = projects.find((p) => p.id === node.sourceId);
+  const status = entry ? statusOf(entry) : null;
+  const bullets = entry?.bullets ?? project?.bullets ?? [];
+  const tags = entry?.tags ?? project?.tags ?? [];
 
   return (
-    <div className="rounded-lg border border-line bg-surface px-3 py-2 shadow-lg">
-      <p className="font-mono text-xs text-amber">{entry.company}</p>
-      <p className="font-mono text-xs text-fog">{entry.title}</p>
-      {entry.dates && (
-        <p className="font-mono text-[0.7rem] text-mute">{entry.dates}</p>
-      )}
-    </div>
+    <motion.div
+      key={node.id}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
+      transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <div className="rounded-lg border border-line bg-ink/60 p-4">
+        <p className="mb-3 font-mono text-[0.7rem] text-mute">
+          <span className="text-mute">$ git show </span>
+          <span className="text-amber">{node.hash}</span>
+        </p>
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <h3 className="font-mono text-sm text-fog">{node.subtitle}</h3>
+          {status && <StatusBadge status={status} />}
+          {node.kind === "project" && (
+            <span className="rounded-full border border-violet/40 px-2 py-0.5 font-mono text-[0.7rem] text-violet">
+              branch
+            </span>
+          )}
+        </div>
+
+        <p className="mb-3 font-mono text-xs text-blue">
+          {node.label}
+          {entry?.location ? (
+            <span className="text-mute"> · {entry.location}</span>
+          ) : null}
+          {entry?.dates ? <span className="text-mute"> · {entry.dates}</span> : null}
+          {project?.period ? (
+            <span className="text-mute"> · {project.period}</span>
+          ) : null}
+        </p>
+
+        {entry?.metrics && (
+          <ul className="mb-3 flex flex-wrap gap-2">
+            {entry.metrics.map((metric) => (
+              <li
+                key={metric}
+                className="rounded-md border border-green/30 bg-green/5 px-2 py-1 font-mono text-[0.7rem] text-green"
+              >
+                {metric}
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {bullets.length > 0 ? (
+          <ul className="mb-3 max-w-[72ch] space-y-2">
+            {bullets.map((bullet) => (
+              <li
+                key={bullet}
+                className="flex gap-2 font-sans text-sm leading-relaxed text-fog/90"
+              >
+                <span aria-hidden="true" className="text-blue">
+                  ▸
+                </span>
+                <span>{bullet}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          entry?.story && (
+            <p className="mb-3 max-w-[72ch] font-sans text-sm leading-relaxed text-fog/90">
+              {entry.story}
+            </p>
+          )
+        )}
+
+        {tags.length > 0 && (
+          <ul className="flex flex-wrap gap-1.5">
+            {tags.map((tag) => (
+              <li
+                key={tag}
+                className="rounded border border-line px-2 py-0.5 font-mono text-[0.7rem] text-mute"
+              >
+                {tag}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </motion.div>
   );
 };
 
 const Experience: React.FC = () => {
   const finePointer = useFinePointer();
-  const chartRef = useRef<HTMLDivElement>(null);
-  const [chartWidth, setChartWidth] = useState(0);
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
 
-  useEffect(() => {
-    const node = chartRef.current;
-    if (!node) return;
-    const observer = new ResizeObserver(([entry]) =>
-      setChartWidth(entry.contentRect.width)
-    );
-    observer.observe(node);
-    return () => observer.disconnect();
+  const graph = useMemo(() => {
+    const roles: RoleInput[] = experienceData
+      .filter((entry) => entry.company !== "?")
+      .map((entry) => ({
+        id: `${entry.company}-${entry.year}`,
+        company: entry.company,
+        title: entry.title,
+        start: entry.start ?? null,
+        year: Math.floor(entry.year),
+      }));
+
+    const projectInputs: ProjectInput[] = projects.map((project) => ({
+      id: project.id,
+      title: project.title,
+      period: project.period,
+      tags: project.tags,
+    }));
+
+    return buildCareerGraph(roles, projectInputs);
   }, []);
 
-  const radius = badgeRadius(chartWidth);
-  const [selectedYear, setSelectedYear] = useState<number>(
-    // Open on whatever role is running now, else the newest finished one.
-    () => {
-      const active = experienceData.filter((e) => statusOf(e) === "Current");
-      return (active.at(-1) ?? experienceData[experienceData.length - 2]).year;
-    }
-  );
-  const [hovered, setHovered] = useState<ExperienceEntry | null>(null);
+  const entryFor = (node: GraphNode) =>
+    node.kind === "role"
+      ? experienceData.find((e) => `${e.company}-${e.year}` === node.sourceId)
+      : undefined;
 
-  const selected = useMemo(
-    () =>
-      experienceData.find((entry) => entry.year === selectedYear) ??
-      experienceData[0],
-    [selectedYear]
-  );
-
-  const ticks = [2021, 2022, 2023, 2024, 2025, 2026, 2027];
-  const status = statusOf(selected);
+  const active = hoveredId ?? openId;
+  const selected =
+    graph.rows.find((row) => row.id === openId) ??
+    graph.rows.find((row) => row.ref) ??
+    graph.rows[0];
 
   return (
-    <div className="mx-auto w-full max-w-6xl">
-      <div className="mb-10 flex justify-center">
+    <div className="mx-auto w-full max-w-5xl">
+      <div className="mb-8 flex justify-center">
         <SectionHeading path="~/experience" label="Experience" />
       </div>
 
       <div className="rounded-2xl border border-line bg-surface/85 p-4 backdrop-blur-md sm:p-6 lg:p-8">
-        {/* Chart: pointer-driven, and mirrored by the list below for keyboard
-            and small screens. */}
-        <div className="hidden sm:block" aria-hidden="true" ref={chartRef}>
-          <ResponsiveContainer width="100%" height={300}>
-            <ComposedChart
-              data={experienceData}
-              margin={MARGIN}
-            >
-              <defs>
-                <linearGradient id="growthFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop
-                    offset="0%"
-                    stopColor="var(--blue)"
-                    stopOpacity={0.22}
-                  />
-                  <stop
-                    offset="100%"
-                    stopColor="var(--blue)"
-                    stopOpacity={0}
-                  />
-                </linearGradient>
-              </defs>
+        <p className="mb-4 font-mono text-xs text-mute">
+          <span className="text-amber">raj@portfolio</span>
+          <span className="text-mute">:</span>
+          <span className="text-blue">~</span>
+          <span className="text-mute">$ git log --graph --all</span>
+        </p>
 
-              <CartesianGrid
-                stroke="var(--line)"
-                strokeDasharray="3 3"
-                vertical={false}
-              />
-              <XAxis
-                dataKey="year"
-                type="number"
-                domain={DOMAIN}
-                ticks={ticks}
-                tickFormatter={(value: number) => String(Math.round(value))}
-                stroke="var(--line)"
-                tick={{ fill: "var(--mute)", fontSize: 11 }}
-                tickLine={false}
-              />
-              <YAxis
-                domain={[0, 108]}
-                hide
-              />
-              <Tooltip
-                content={<ChartTooltip />}
-                cursor={{ stroke: "var(--line)" }}
-              />
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)]">
+        <div className="flex gap-3 overflow-x-auto">
+          <GraphRails graph={graph} activeId={active} />
 
-              <Area
-                type="monotone"
-                dataKey="growth"
-                stroke="var(--blue)"
-                strokeWidth={2}
-                fill="url(#growthFill)"
-                dot={false}
-                activeDot={false}
-                isAnimationActive={false}
-              />
+          <ol className="min-w-0 flex-1">
+            {graph.rows.map((node) => {
+              const entry = entryFor(node);
+              const status = entry ? statusOf(entry) : null;
+              const isOpen = openId === node.id;
+              const dimmed =
+                finePointer && hoveredId !== null && hoveredId !== node.id;
 
-              <Scatter
-                dataKey="growth"
-                isAnimationActive={false}
-                shape={(props: unknown) => {
-                  const { cx, cy, payload } = props as {
-                    cx: number;
-                    cy: number;
-                    payload: ExperienceEntry;
-                  };
-                  return (
-                    <LogoBadge
-                      cx={cx}
-                      cy={cy}
-                      entry={payload}
-                      radius={radius}
-                      active={payload.year === selected.year}
-                      onSelect={() => setSelectedYear(payload.year)}
-                      onHover={setHovered}
-                    />
-                  );
-                }}
-              />
-            </ComposedChart>
-          </ResponsiveContainer>
+              return (
+                <li
+                  key={node.id}
+                  style={{ height: ROW_HEIGHT }}
+                  className="flex items-center"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setOpenId(node.id)}
+                    onMouseEnter={() => setHoveredId(node.id)}
+                    onMouseLeave={() => setHoveredId(null)}
+                    onFocus={() => setHoveredId(node.id)}
+                    onBlur={() => setHoveredId(null)}
+                    aria-current={isOpen ? "true" : undefined}
+                    className={`flex w-full items-baseline gap-2 rounded px-1 text-left font-mono text-xs transition-opacity duration-200 sm:gap-3 ${
+                      dimmed ? "opacity-50" : "opacity-100"
+                    } ${isOpen ? "bg-blue/10" : ""}`}
+                  >
+                    <span className="shrink-0 text-amber/80">{node.hash}</span>
+                    <span className="hidden shrink-0 text-mute sm:inline">
+                      {formatDate(node.date)}
+                    </span>
+                    {node.ref && (
+                      <span className="shrink-0 rounded border border-amber/40 px-1 text-[0.65rem] text-amber">
+                        {node.ref}
+                      </span>
+                    )}
+                    <span className="truncate text-fog">
+                      {node.kind === "project" ? (
+                        <span className="text-violet">feat: </span>
+                      ) : null}
+                      {node.label}
+                    </span>
+                    {status === "Current" && (
+                      <span className="shrink-0 text-green">●</span>
+                    )}
+                  </button>
+                </li>
+              );
+            })}
+          </ol>
         </div>
 
-        {/* Entry list: the keyboard and small-screen path to the same data. */}
-        <ul className="mt-2 divide-y divide-line sm:mt-6">
-          {experienceData.map((entry) => {
-            const isSelected = entry.year === selected.year;
-            const dimmed =
-              finePointer && hovered !== null && hovered.year !== entry.year;
-            const entryStatus = statusOf(entry);
-
-            return (
-              <li key={entry.year}>
-                <button
-                  type="button"
-                  onClick={() => setSelectedYear(entry.year)}
-                  onMouseEnter={() => setHovered(entry)}
-                  onMouseLeave={() => setHovered(null)}
-                  onFocus={() => setHovered(entry)}
-                  onBlur={() => setHovered(null)}
-                  aria-pressed={isSelected}
-                  className={`flex w-full flex-wrap items-baseline gap-x-3 gap-y-1 rounded-md px-2 py-3 text-left transition-opacity duration-200 ${
-                    dimmed ? "opacity-50" : "opacity-100"
-                  }`}
-                >
-                  <span
-                    className={`font-mono text-xs ${
-                      isSelected ? "text-amber" : "text-mute"
-                    }`}
-                  >
-                    {entry.dates ?? Math.round(entry.year)}
-                  </span>
-                  <span
-                    className={`font-mono text-sm ${
-                      isSelected ? "text-fog" : "text-fog/80"
-                    }`}
-                  >
-                    {entry.title}
-                  </span>
-                  <span className="font-mono text-sm text-blue">
-                    {entry.company}
-                  </span>
-                  {entryStatus && <StatusBadge status={entryStatus} />}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-
-        {/* Story card */}
-        <motion.div
-          layout
-          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-          className="mt-6 overflow-hidden rounded-xl border border-line bg-ink p-5 sm:p-6"
-        >
+        {/* git show, for whichever commit is selected. */}
+        <div className="mt-6 lg:mt-0">
           <AnimatePresence mode="wait" initial={false}>
-            <motion.div
-              key={selected.year}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.22 }}
-            >
-              <div className="mb-4 flex flex-col-reverse items-start justify-between gap-4 sm:flex-row sm:items-center">
-                <div>
-                  <div className="mb-1 flex flex-wrap items-center gap-2">
-                    <h3 className="font-mono text-lg text-fog">
-                      {selected.title}
-                    </h3>
-                    {status && <StatusBadge status={status} />}
-                  </div>
-
-                  <p className="font-mono text-sm text-blue">
-                    {selected.company}
-                    {selected.location ? (
-                      <span className="text-mute"> · {selected.location}</span>
-                    ) : null}
-                    {selected.dates ? (
-                      <span className="text-mute"> · {selected.dates}</span>
-                    ) : null}
-                  </p>
-                </div>
-
-                {/* The logo at a readable size: the chart badges are too small
-                    to actually look at. White plate keeps every brand legible. */}
-                {selected.image && (
-                  <a
-                    href={selected.link || undefined}
-                    target={selected.link ? "_blank" : undefined}
-                    rel="noopener noreferrer"
-                    aria-label={selected.company}
-                    className="flex h-20 w-40 shrink-0 items-center justify-center rounded-lg border border-line bg-white p-3 transition-colors hover:border-amber"
-                  >
-                    <img
-                      src={selected.image}
-                      alt={`${selected.company} logo`}
-                      className="max-h-full max-w-full object-contain"
-                    />
-                  </a>
-                )}
-              </div>
-
-              {selected.metrics && (
-                <ul className="mb-4 flex flex-wrap gap-2">
-                  {selected.metrics.map((metric) => (
-                    <li
-                      key={metric}
-                      className="rounded-md border border-green/30 bg-green/5 px-2 py-1 font-mono text-[0.7rem] text-green"
-                    >
-                      {metric}
-                    </li>
-                  ))}
-                </ul>
-              )}
-
-              {selected.bullets ? (
-                <ul className="mb-4 max-w-[72ch] space-y-2">
-                  {selected.bullets.map((bullet) => (
-                    <li
-                      key={bullet}
-                      className="flex gap-2 font-sans text-sm leading-relaxed text-fog/90"
-                    >
-                      <span aria-hidden="true" className="text-blue">
-                        ▸
-                      </span>
-                      <span>{bullet}</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="mb-4 max-w-[72ch] font-sans text-sm leading-relaxed text-fog/90">
-                  {selected.story}
-                </p>
-              )}
-
-              {selected.tags && (
-                <ul className="flex flex-wrap gap-1.5">
-                  {selected.tags.map((tag) => (
-                    <li
-                      key={tag}
-                      className="rounded border border-line px-2 py-0.5 font-mono text-[0.7rem] text-mute"
-                    >
-                      {tag}
-                    </li>
-                  ))}
-                </ul>
-              )}
-
-              {selected.link && (
-                <a
-                  href={selected.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-4 inline-block font-mono text-xs text-blue underline-offset-4 hover:underline"
-                >
-                  {selected.company} ↗
-                </a>
-              )}
-            </motion.div>
+            {selected && (
+              <CommitDetail
+                key={selected.id}
+                node={selected}
+                entry={entryFor(selected)}
+              />
+            )}
           </AnimatePresence>
-        </motion.div>
+        </div>
+
+        </div>
+
+        <p className="mt-4 font-mono text-[0.7rem] text-mute">
+          {graph.rows.length} commits · select one to see it ·{" "}
+          <span className="text-violet">violet</span> branches are projects
+        </p>
       </div>
     </div>
   );

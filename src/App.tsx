@@ -5,7 +5,6 @@ import Experience from "@/scenes/experience";
 import Projects from "@/scenes/projects";
 import ToolsSection from "@/scenes/tools";
 import CreativeAdditions from "@/components/CreativeAdditions";
-import SceneBackdrop from "@/components/SceneBackdrop";
 import Hero from "@/components/Hero";
 import Connect from "@/components/Connect";
 import CommandPalette from "@/components/CommandPalette";
@@ -46,7 +45,6 @@ const App: React.FC = () => (
       </a>
 
       <CreativeAdditions />
-      <SceneBackdrop />
       <Navbar />
       <CommandPalette />
       <Toast />
