@@ -10,7 +10,7 @@ export { statusOf } from "./status";
 export interface ExperienceEntry {
   /** Set on actual roles; milestones like "started university" leave it out. */
   file?: string;
-  /** Fractional year used as the chart's x position: year + (month - 1) / 12. */
+  /** Fractional year, year + (month - 1) / 12; orders the roles on the page. */
   year: number;
   growth: number;
   title: string;

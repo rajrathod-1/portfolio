@@ -42,6 +42,17 @@ for (const project of projects) {
 
 for (const tool of ["Spring Boot", "Apache Kafka", "Elasticsearch"]) inHtml(`tool ${tool}`, tool);
 
+// Order on the page: roles newest first, projects with a live demo first.
+// Company names also appear in the About copy, so only look past the Experience heading.
+const experienceStart = text.indexOf("Committed to the log.");
+const at = (needle: string, from = 0) => text.indexOf(needle, from);
+const roleOrder = ["Citi", "Ericsson", "Proofpoint", "Outlier", "UM DevClub"].map((c) => at(c, experienceStart));
+if (experienceStart < 0 || roleOrder.some((pos, i) => pos < 0 || (i > 0 && pos < roleOrder[i - 1])))
+  failures.push(`roles out of order: ${roleOrder.join(", ")}`);
+const projectOrder = projects.map((p) => ({ demo: !!p.demo, pos: at(p.title) })).sort((a, b) => a.pos - b.pos);
+if (projectOrder.some((p, i) => i > 0 && p.demo && !projectOrder[i - 1].demo))
+  failures.push("a project with a live demo comes after one without");
+
 inHtml("email", SITE.email);
 inHtml("GitHub", SITE.github);
 inHtml("LinkedIn", SITE.linkedin);

@@ -95,7 +95,8 @@ export function Stream() {
 const splitMetric = (m: string) => [m.slice(0, m.indexOf(" ")), m.slice(m.indexOf(" ") + 1)];
 
 export function Offsets() {
-  const roles = experienceData.filter((e) => e.file);
+  // Most recent first. Offsets still count up with time, like a log.
+  const roles = experienceData.filter((e) => e.file).sort((a, b) => b.year - a.year);
   return (
     <section id="experience" className="offsets">
       <Chapter no="03" name="Offsets">
@@ -103,13 +104,13 @@ export function Offsets() {
           <Words text="Committed to the log." />
         </h2>
         <p className="lede" data-reveal>
-          Every role, oldest first. Keep scrolling: you're inside the stream now.
+          Every role, most recent first. Keep scrolling: you're inside the stream now.
         </p>
       </Chapter>
       {roles.map((role, i) => (
         <article className="offset" key={role.company}>
           <p className="mono label" data-reveal>
-            offset {String(i + 1).padStart(4, "0")} · {statusOf(role)}
+            offset {String(roles.length - i).padStart(4, "0")} · {statusOf(role)}
           </p>
           <h3 className="company" data-reveal="words">
             <Words text={role.company} />
@@ -151,6 +152,9 @@ export function Offsets() {
   );
 }
 
+// Projects with a live demo first; otherwise the order in lib/projects.ts.
+const shown = [...projects].sort((a, b) => Number(!!b.demo) - Number(!!a.demo));
+
 export function Matched({ onFocus }: { onFocus: (on: boolean) => void }) {
   return (
     <section id="work" className="matched">
@@ -167,7 +171,7 @@ export function Matched({ onFocus }: { onFocus: (on: boolean) => void }) {
         </p>
       </Chapter>
       <ol className="projects">
-        {projects.map((p, i) => (
+        {shown.map((p, i) => (
           <li
             key={p.id}
             className="project"
