@@ -4,7 +4,7 @@ export interface Project {
   period: string;
   /** One line for the grid; the bullets carry the detail. */
   summary: string;
-  /** Résumé bullets, verbatim. */
+  /** The detail behind the summary. */
   bullets: string[];
   tags: string[];
   demo?: { label: string; href: string };
@@ -17,12 +17,22 @@ export const projects: Project[] = [
     title: "Limit Order Book and Matching Engine",
     period: "Sep 2026 - Present",
     summary:
-      "A price-time priority matching engine in C++, tested by diffing every fill against a deliberately simple Python reference.",
+      "A price-time priority matching engine in C++20, 2.2x faster than a std::map book on a full day of real Nasdaq data, and running live in the browser through WebAssembly.",
     bullets: [
-      "Building a price-time priority matching engine in C++ supporting limit, market, and cancel orders, with sorted price levels and an order-id index so cancels do not scan the book.",
-      "Testing it by replaying randomly generated order streams against a deliberately simple reference implementation in Python and diffing every fill; this catches partial-fill and cancel edge cases that hand-written unit tests missed.",
+      "Built the book on a flat tick-indexed array with intrusive per-level queues, 32-byte orders from a preallocated pool, and a three-level occupancy bitmap that finds the next best price in at most three word operations, so the hot path never allocates or walks a tree.",
+      "Replayed a full Nasdaq TotalView-ITCH 5.0 session (1.5M AAPL messages) at 27M operations a second, 2.2x faster than a std::map baseline, with exact-percentile latencies of 108 ns p50 per insert and 24 ns per cancel.",
+      "Proved the two books agree with differential tests over hundreds of thousands of random operations and mid-session cross-checks on real data: 73 tests, CI on Linux and macOS, plus ASan and UBSan.",
+      "Compiled the engine to WebAssembly for a live demo where visitors sweep the book with market orders and run the array-versus-std::map benchmark in their own browser.",
     ],
-    tags: ["C++", "Python"],
+    tags: ["C++20", "CMake", "GoogleTest", "Google Benchmark", "WebAssembly"],
+    demo: {
+      label: "Live demo",
+      href: "https://raj-rathod-order-book.vercel.app",
+    },
+    repo: {
+      label: "GitHub",
+      href: "https://github.com/rajrathod-1/limit-order-book",
+    },
   },
   {
     id: "interpreter",
