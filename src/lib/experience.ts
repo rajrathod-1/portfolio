@@ -4,13 +4,11 @@ import ProofpointLogo from "@/assets/proofpoint-logo.jpg";
 import EricssonLogo from "@/assets/erricson-logo.png";
 import CitiLogo from "@/assets/citi.svg";
 
-import { statusOf } from "./status";
-
 export type { Status } from "./status";
 export { statusOf } from "./status";
 
 export interface ExperienceEntry {
-  /** Terminal filename, when this entry has one. */
+  /** Set on actual roles; milestones like "started university" leave it out. */
   file?: string;
   /** Fractional year used as the chart's x position: year + (month - 1) / 12. */
   year: number;
@@ -197,37 +195,3 @@ export const experienceData: ExperienceEntry[] = [
     link: "",
   },
 ];
-
-/**
- * The role to name as current: whatever is running now, else the most recent
- * finished one. Recomputed from dates so it never goes stale.
- */
-export function currentRole(now: Date = new Date()): ExperienceEntry | null {
-  const roles = experienceData.filter((e) => e.start && e.file);
-  const active = roles
-    .filter((e) => statusOf(e, now) === "Current")
-    .sort((a, b) => b.year - a.year);
-  if (active.length) return active[0];
-
-  const finished = roles
-    .filter((e) => statusOf(e, now) === "Completed")
-    .sort((a, b) => b.year - a.year);
-  return finished[0] ?? null;
-}
-
-export function upcomingRole(now: Date = new Date()): ExperienceEntry | null {
-  return (
-    experienceData
-      .filter((e) => e.file && statusOf(e, now) === "Upcoming")
-      .sort((a, b) => a.year - b.year)[0] ?? null
-  );
-}
-
-/** Renders an entry in the terminal's file format. */
-export function terminalFileText(entry: ExperienceEntry): string {
-  const header = `${entry.title} @ ${entry.company}${
-    entry.dates ? ` (${entry.dates})` : ""
-  }`;
-  const bullets = (entry.bullets ?? []).map((b) => `• ${b}`);
-  return [header, ...bullets].join("\n");
-}

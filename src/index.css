@@ -1,142 +1,710 @@
-@import "tailwindcss";
-
-@custom-variant dark (&:where(.dark, .dark *));
-
-/* ANSI-style terminal theme. Color carries meaning:
-   blue = paths/links, amber = prompt/cursor, green = success/status,
-   red = errors, violet = highlights. */
 :root {
-  --ink: #eef1f6;
-  --surface: #ffffff;
-  --line: #d5dbe7;
-  --fog: #1a2133;
-  --mute: #5a6480;
-  --blue: #2d5bd0;
-  --amber: #9a5b00;
-  --green: #3b7a1e;
-  --red: #c4304f;
-  --violet: #7a4fd6;
+  --ink: #0b0b0c;
+  --paper: #ebe7df;
+  --signal: #ff4b1f;
+  --fg: var(--paper);
+  --bg: var(--ink);
+  --accent: var(--signal);
+  --dim: color-mix(in srgb, var(--fg) 64%, transparent);
+  --line: color-mix(in srgb, var(--fg) 18%, transparent);
+  --serif: "Instrument Serif", Georgia, serif;
+  --sans: "Instrument Sans Variable", system-ui, sans-serif;
+  --mono: "Martian Mono Variable", ui-monospace, monospace;
+  --gutter: clamp(16px, 4vw, 56px);
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  color-scheme: dark;
 }
 
-:root.dark {
-  --ink: #0e1422;
-  --surface: #161e30;
-  --line: #26304a;
-  --fog: #e4e8f1;
-  --mute: #8e98b0;
-  --blue: #7aa2f7;
-  --amber: #f0b45c;
-  --green: #9ece6a;
-  --red: #f7768e;
-  --violet: #bb9af7;
+/* The Matched chapter turns the world to paper; the copy follows. */
+:root[data-tone="paper"] {
+  --fg: var(--ink);
+  --bg: var(--paper);
+  --accent: #b3300e;
+  color-scheme: light;
 }
 
-@theme inline {
-  --breakpoint-sm: 700px;
-  --breakpoint-md: 850px;
-  --breakpoint-lg: 1280px;
-
-  --color-ink: var(--ink);
-  --color-surface: var(--surface);
-  --color-line: var(--line);
-  --color-fog: var(--fog);
-  --color-mute: var(--mute);
-  --color-blue: var(--blue);
-  --color-amber: var(--amber);
-  --color-green: var(--green);
-  --color-red: var(--red);
-  --color-violet: var(--violet);
-
-  --font-mono: "Martian Mono Variable", ui-monospace, SFMono-Regular, "SF Mono",
-    Menlo, Consolas, "Liberation Mono", monospace;
-  --font-sans: "Instrument Sans Variable", ui-sans-serif, system-ui,
-    -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-}
-
-html,
-body,
-#root,
-.app {
-  height: 100%;
-  width: 100%;
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 html {
   scroll-behavior: smooth;
-  /* Sticky navbar height + breathing room for in-page anchors. */
-  scroll-padding-top: 5rem;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  font-family: var(--font-sans);
-  background-color: var(--ink);
-  color: var(--fog);
-  font-size: 1rem;
-  line-height: 1.6;
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 400 1rem/1.6 var(--sans);
   -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+  transition: background-color 0.6s var(--ease), color 0.6s var(--ease);
 }
 
-/* Custom cursor replaces the native one only where a real pointer exists. */
-@media (pointer: fine) {
-  .app,
-  .app button,
-  .app a {
-    cursor: none;
-  }
+a {
+  color: inherit;
 }
 
-/* The terminal caret must stay visible even with the custom cursor. */
-.app input,
-.app textarea {
-  cursor: text;
-}
-
-/* :where() keeps this at zero specificity, so a component that styles its own
-   focus (outline-none on the palette's search field) actually wins. */
-:where(:focus-visible) {
-  outline: 2px solid var(--amber);
-  outline-offset: 2px;
-  border-radius: 2px;
-}
-
-/* Thin scrollbars, so an overflowing panel doesn't get a fat grey bar across
-   its rounded corner. */
-.scroll-slim {
-  scrollbar-width: thin;
-  scrollbar-color: var(--line) transparent;
-}
-
-.scroll-slim::-webkit-scrollbar {
-  width: 6px;
-}
-
-.scroll-slim::-webkit-scrollbar-thumb {
-  background-color: var(--line);
-  border-radius: 3px;
-}
-
-.scroll-slim::-webkit-scrollbar-track {
-  background: transparent;
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
 }
 
 ::selection {
-  background: color-mix(in srgb, var(--violet) 35%, transparent);
+  background: var(--signal);
+  color: var(--ink);
 }
 
-/* Circular theme reveal. Both layers sit still so only the new one is clipped. */
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation: none;
-  mix-blend-mode: normal;
+:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 4px;
 }
 
-::view-transition-old(root) {
+.is-paused body {
+  user-select: none;
+}
+
+.mono {
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.label {
+  color: var(--accent);
+  margin: 0;
+}
+
+.skip {
+  position: fixed;
+  left: var(--gutter);
+  top: 12px;
+  z-index: 20;
+  padding: 8px 12px;
+  background: var(--fg);
+  color: var(--bg);
+  transform: translateY(-200%);
+}
+
+.skip:focus {
+  transform: none;
+}
+
+/* ── Stage ───────────────────────────────────────────── */
+
+.stage {
+  position: fixed;
+  inset: 0;
   z-index: 0;
 }
 
-::view-transition-new(root) {
+.stage canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.loader {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  color: var(--dim);
   z-index: 1;
+  pointer-events: none;
+  animation: blink 1.2s steps(2) infinite;
+  transition: opacity 0.6s;
+}
+
+.is-ready .loader {
+  opacity: 0;
+  animation: none;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+main {
+  position: relative;
+  z-index: 2;
+}
+
+section {
+  position: relative;
+  padding: 0 var(--gutter);
+}
+
+/* ── HUD: difference-blended so it reads on ink, paper and particles ── */
+
+.hud {
+  position: fixed;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 20px var(--gutter);
+  color: #fff;
+  mix-blend-mode: difference;
+  pointer-events: none;
+}
+
+.hud a {
+  pointer-events: auto;
+  text-decoration: none;
+}
+
+.hud-top {
+  top: 0;
+}
+
+.hud-bottom {
+  bottom: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.hud nav {
+  display: flex;
+  gap: clamp(14px, 2.6vw, 36px);
+}
+
+.hud nav a,
+.links a,
+.actions a,
+.actions button {
+  background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat;
+  transition: background-size 0.5s var(--ease), transform 0.4s var(--ease);
+  padding-bottom: 2px;
+  text-decoration: none;
+}
+
+.hud nav a:hover,
+.links a:hover,
+.actions a:hover,
+.actions button:hover {
+  background-size: 100% 1px;
+}
+
+@media (max-width: 640px) {
+  .hud nav a:not(:last-child),
+  .hud-bottom > :nth-child(2) {
+    display: none;
+  }
+}
+
+@media (hover: none) {
+  .hint {
+    display: none;
+  }
+}
+
+/* ── Reveal ─────────────────────────────────────────── */
+
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 1s var(--ease), transform 1.2s var(--ease);
+  transition-delay: calc(var(--i, 0) * 80ms);
+}
+
+[data-reveal].is-in,
+[data-reveal="words"] {
+  opacity: 1;
+  transform: none;
+}
+
+.w {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  padding: 0 0.06em 0.12em 0;
+  margin-bottom: -0.12em;
+}
+
+.w > span {
+  display: inline-block;
+  transform: translateY(110%);
+  transition: transform 1.2s var(--ease);
+  transition-delay: calc(var(--i) * 55ms);
+}
+
+.is-in .w > span {
+  transform: none;
+}
+
+/* ── Type ───────────────────────────────────────────── */
+
+.display {
+  font: 400 clamp(2.75rem, 7.6vw, 7.5rem) / 0.95 var(--serif);
+  letter-spacing: -0.02em;
+  margin: 0.35em 0 0;
+  text-wrap: balance;
+}
+
+.display em,
+.company {
+  font-style: italic;
+}
+
+.display em {
+  color: var(--accent);
+}
+
+.lede {
+  max-width: 30rem;
+  margin: 1.6rem 0 0;
+  color: var(--dim);
+  font-size: clamp(1rem, 1.3vw, 1.15rem);
+}
+
+.chapter {
+  min-height: 100vh;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: 68rem;
+}
+
+/* Copy sits over moving particles: a soft halo keeps it legible. */
+main p,
+main li,
+main dd,
+main h3 {
+  text-shadow: 0 0 18px var(--bg), 0 0 2px var(--bg);
+}
+
+/* ── 01 Hero ────────────────────────────────────────── */
+
+.hero {
+  height: 100vh;
+  height: 100svh;
+  min-height: 520px;
+  text-align: center;
+}
+
+/* Rendered in particles; kept for screen readers and the no-WebGL fallback. */
+.hero-name {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  font: 400 clamp(4.5rem, 16vw, 15rem) / 0.9 var(--serif);
+  opacity: 0;
+  pointer-events: none;
+  user-select: none;
+}
+
+.no-webgl .hero-name {
+  opacity: 1;
+}
+
+.no-webgl .stage,
+.no-webgl .hud-bottom {
+  display: none;
+}
+
+.hero-role {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 27%;
+  margin: 0;
+  color: var(--dim);
+}
+
+.hero-foot {
+  position: absolute;
+  left: var(--gutter);
+  right: var(--gutter);
+  top: 66%;
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+}
+
+.hero-line {
+  margin: 0;
+  max-width: 24ch;
+  font: italic 400 clamp(1.5rem, 2.6vw, 2.25rem) / 1.15 var(--serif);
+}
+
+.status {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--dim);
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--signal);
+  box-shadow: 0 0 0 0 var(--signal);
+  animation: pulse 2.4s var(--ease) infinite;
+}
+
+@keyframes pulse {
+  70% {
+    box-shadow: 0 0 0 8px transparent;
+  }
+}
+
+.cue {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 76px;
+  margin: 0;
+  color: var(--dim);
+}
+
+/* The hero copy waits for the noise to resolve into the name. */
+.intro {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 1.2s var(--ease), transform 1.4s var(--ease);
+  transition-delay: calc(3s + var(--i, 0) * 140ms);
+}
+
+.is-ready .intro {
+  opacity: 1;
+  transform: none;
+}
+
+/* ── 02 Stream ──────────────────────────────────────── */
+
+.about {
+  display: grid;
+  gap: 1.2em;
+  max-width: 36rem;
+  font-size: clamp(1.05rem, 1.45vw, 1.3rem);
+  line-height: 1.55;
+}
+
+.about p {
+  margin: 0;
+}
+
+.partitions {
+  margin: 22vh 0 0;
+  padding-bottom: 40vh;
+  max-width: 68rem;
+}
+
+.partitions > div {
+  display: grid;
+  grid-template-columns: minmax(9rem, 14rem) 1fr;
+  gap: 8px 24px;
+  padding: 18px 0;
+  border-top: 1px solid var(--line);
+}
+
+.partitions dt {
+  color: var(--dim);
+  padding-top: 0.35em;
+}
+
+.partitions dd {
+  margin: 0;
+  font: 400 clamp(1.25rem, 2.2vw, 1.9rem) / 1.25 var(--serif);
+}
+
+@media (max-width: 640px) {
+  .partitions > div {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── 03 Offsets: flying through the stream ──────────── */
+
+.offset {
+  min-height: 115vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: 42rem;
+  padding: 12vh 0;
+}
+
+.company {
+  font: italic 400 clamp(3.75rem, 11vw, 10rem) / 0.88 var(--serif);
+  letter-spacing: -0.03em;
+  margin: 0.15em 0 0.2em;
+}
+
+.role {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 16px;
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.role .mono {
+  color: var(--dim);
+}
+
+.metrics {
+  list-style: none;
+  padding: 0;
+  margin: 2rem 0 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  gap: 20px;
+  color: var(--dim);
+  font-size: 0.875rem;
+  line-height: 1.35;
+}
+
+.metrics strong {
+  display: block;
+  color: var(--accent);
+  font: 400 clamp(2.25rem, 4vw, 3.5rem) / 1 var(--serif);
+  margin-bottom: 4px;
+}
+
+.bullets {
+  list-style: none;
+  padding: 0;
+  margin: 2rem 0 0;
+}
+
+.bullets li {
+  position: relative;
+  padding: 12px 0 12px 1.75rem;
+  border-top: 1px solid var(--line);
+  color: var(--dim);
+  font-size: 0.95rem;
+}
+
+.bullets li::before {
+  content: "—";
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+}
+
+.tags {
+  margin: 1.25rem 0 0;
+  color: var(--dim);
+  line-height: 2;
+}
+
+/* ── 04 Matched: ink on paper ───────────────────────── */
+
+.projects {
+  list-style: none;
+  padding: 0 0 40vh;
+  margin: 0;
+  max-width: 50rem;
+}
+
+.project {
+  display: grid;
+  grid-template-columns: 3.5rem 1fr;
+  padding: 36px 0;
+  border-top: 1px solid var(--line);
+}
+
+.idx {
+  padding-top: 0.9em;
+  color: var(--accent);
+}
+
+.project h3 {
+  margin: 0 0 0.35em;
+  font: 400 clamp(2rem, 3.6vw, 3.4rem) / 1 var(--serif);
+  letter-spacing: -0.015em;
+  transition: color 0.3s, transform 0.6s var(--ease);
+}
+
+.project:hover h3 {
+  color: var(--accent);
+  transform: translateX(0.2em);
+}
+
+.meta {
+  color: var(--dim);
+  margin: 0;
+}
+
+.summary {
+  margin: 1rem 0 0;
+  max-width: 34rem;
+}
+
+details {
+  margin-top: 1rem;
+}
+
+summary {
+  list-style: none;
+  cursor: pointer;
+  color: var(--accent);
+  width: fit-content;
+}
+
+summary::-webkit-details-marker {
+  display: none;
+}
+
+summary::before {
+  content: "+ ";
+}
+
+details[open] summary::before {
+  content: "– ";
+}
+
+details ul {
+  margin: 0.75rem 0 0;
+  padding-left: 1.1rem;
+  max-width: 36rem;
+  color: var(--dim);
+  font-size: 0.95rem;
+}
+
+details li + li {
+  margin-top: 0.5rem;
+}
+
+.links {
+  display: flex;
+  gap: 24px;
+  margin: 1.1rem 0 0;
+}
+
+/* Landscape: the collision fills the left half, the work sits in the right. */
+@media (min-aspect-ratio: 11/10) {
+  .matched .chapter,
+  .matched .projects {
+    margin-left: 48%;
+  }
+}
+
+/* ── 05 Ack ─────────────────────────────────────────── */
+
+.ack {
+  min-height: 150vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  text-align: center;
+  padding-bottom: 72px;
+}
+
+.ack .display {
+  font-size: clamp(2.5rem, 6vw, 6rem);
+  max-width: 14ch;
+}
+
+.email {
+  display: inline-block;
+  margin-top: 1.5rem;
+  font: italic 400 clamp(1.6rem, 4.6vw, 4rem) / 1.1 var(--serif);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+  transition: color 0.3s, transform 0.4s var(--ease);
+  overflow-wrap: anywhere;
+}
+
+.email:hover {
+  color: var(--accent);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px 28px;
+  margin: 2.25rem 0 0;
+}
+
+.colophon {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 28px;
+  margin-top: 10vh;
+  color: var(--dim);
+  font-size: 0.625rem;
+}
+
+/* ── Cursor, toast ──────────────────────────────────── */
+
+.cursor {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 10;
+  width: 28px;
+  height: 28px;
+  margin: -14px 0 0 -14px;
+  border: 1px solid #fff;
+  border-radius: 50%;
+  mix-blend-mode: difference;
+  pointer-events: none;
+  transform: translate(-100px, -100px);
+  transition: width 0.4s var(--ease), height 0.4s var(--ease), margin 0.4s var(--ease),
+    background-color 0.4s;
+}
+
+.is-link .cursor {
+  width: 56px;
+  height: 56px;
+  margin: -28px 0 0 -28px;
+}
+
+/* Held: the ring becomes a lens that inverts the frozen frame. */
+.is-paused .cursor {
+  width: 120px;
+  height: 120px;
+  margin: -60px 0 0 -60px;
+  background: #fff;
+}
+
+@media (hover: none) {
+  .cursor {
+    display: none;
+  }
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 64px;
+  z-index: 6;
+  margin: 0;
+  padding: 10px 16px;
+  transform: translateX(-50%);
+  background: var(--fg);
+  color: var(--bg);
+}
+
+.toast:empty {
+  display: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -144,11 +712,16 @@ body {
     scroll-behavior: auto;
   }
 
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+  [data-reveal],
+  .w > span,
+  .intro {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .dot,
+  .loader {
+    animation: none;
   }
 }

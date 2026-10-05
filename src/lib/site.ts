@@ -2,7 +2,7 @@ export const SITE = {
   name: "Raj Rathod",
   role: "Software developer",
   status: "Open to new grad software roles",
-  email: "rathodraj725@gmail.com",
+  email: "rajrathod2323@gmail.com",
   github: "https://github.com/rajrathod-1",
   githubHandle: "github.com/rajrathod-1",
   linkedin: "https://linkedin.com/in/raj-rathod1",
@@ -27,14 +27,4 @@ export async function copyEmail() {
     // Clipboard access can be denied; show the address so it can be copied by hand.
     showToast(SITE.email);
   }
-}
-
-export function downloadResume() {
-  const link = document.createElement("a");
-  link.href = SITE.resume;
-  link.download = SITE.resumeFile;
-  link.rel = "noopener";
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
 }

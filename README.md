@@ -1,30 +1,27 @@
-# Raj Rathod — portfolio
+# Raj Rathod — Signal / Noise
 
-A personal portfolio built around a terminal you can actually type in. The hero
-is a working shell: `ls`, `cd`, `cat` and Tab completion all behave the way you
-would expect, and the files it browses are the same data that renders the rest
-of the page.
+A portfolio told through a single medium: about 64,000 particles, each one a
+"message", rendered by one Three.js shader. As you scroll, the same particles
+reorganise into five states. Together they tell the story of someone who builds
+event streams, matching engines and proxies.
 
-Built with React 19, TypeScript, Vite 6 and Tailwind CSS 4. No backend.
+| Chapter | The particles become | The page shows |
+| --- | --- | --- |
+| 01 Signal | static that resolves into the name | role, status |
+| 02 Stream | lanes of packets, like partitions of a topic | about, tools |
+| 03 Offsets | a tunnel the camera flies inside | every role, oldest first |
+| 04 Matched | two sides of an order book colliding, on paper | projects |
+| 05 Ack | a single orb with a disk | contact |
 
-## Try it
+Things to find:
 
-Start typing anywhere on the page — the first keystroke jumps to the prompt.
-
-```
-help                        list every command
-ls                          experience/  projects/  technologies/  contact/
-cd experience               change directory
-cat citi.txt                read a file
-tree                        print the whole file system
-neofetch                    the short version of me
-history                     commands from this session
-theme light|dark            switch the site theme
-resume                      download my resume
-```
-
-Tab completes, ↑/↓ walk back through history, `/` jumps to the prompt, and
-<kbd>⌘K</kbd> (<kbd>Ctrl K</kbd> elsewhere) opens a command palette.
+- **The cursor is wind.** Particles part around it in every chapter.
+- **Hold the mouse anywhere** (not on a link) and the stream freezes. Move
+  while holding to orbit the frozen frame. Let go and it rushes to catch up.
+- **Scroll speed is throughput.** Scroll fast and the stream runs hot and the
+  frame tears at the edges.
+- **The world flips to paper** for Matched. Each matched pair flashes vermilion.
+- **Click the email** and the final orb blows apart, then pulls itself back together.
 
 ## Running it
 
@@ -41,82 +38,67 @@ npm run dev          # http://localhost:5173
 | `npm run build` | Type-check, then build to `dist/` |
 | `npm run preview` | Serve the production build locally |
 | `npm run lint` | ESLint over the whole project |
-| `npm test` | Unit tests for date-status and chart geometry |
+| `npm test` | Unit tests for date status and the scroll → formation mapping |
 | `npm run smoke` | Server-renders the app and asserts its content |
 
 ## How it is put together
 
 ```
 src/
-├── App.tsx                 page shell: sections, skip link, motion config
-├── main.tsx                entry point
-├── index.css               ANSI colour tokens, fonts, focus styles
-├── components/
-│   ├── Hero.tsx            terminal window, name animation, status pill
-│   ├── Terminal.tsx        the shell: commands, completion, history
-│   ├── CommandPalette.tsx  ⌘K palette (cmdk)
-│   ├── ProjectDiagram.tsx  per-project architecture sketches
-│   ├── Connect.tsx         contact links, copy email, resume
-│   ├── SectionHeading.tsx  headings that type themselves as prompts
-│   ├── Neko.tsx            cursor-following cat (see Credits)
-│   └── …                   custom cursor, floating shapes, toast
-├── scenes/
-│   ├── navbar.tsx          sticky bar, scroll progress, theme toggle
-│   ├── experience.tsx      career timeline chart + entry list
-│   ├── projects.tsx        bento grid and spotlight views
-│   └── tools.tsx           grouped skills
+├── App.tsx            HUD, cursor, reveals; mounts the world
+├── sections.tsx       the five chapters' copy, rendered from lib/
+├── index.css          tokens, type, layout, the paper flip
+├── world/
+│   ├── World.ts       renderer, camera choreography, input, resize, cleanup
+│   ├── shaders.ts     the six formations + post pass (inversion, grain, split)
+│   ├── form.ts        scroll position → formation (tested)
+│   └── text.ts        samples the name's glyphs into particle targets
 └── lib/
-    ├── experience.ts       career data — single source of truth
-    ├── projects.ts         project data, and the terminal's projects/ files
-    ├── filesystem.ts       the fake file system the shell browses
-    ├── status.ts           Upcoming / Current / Completed from dates
-    ├── chart.ts            timeline geometry
-    └── theme.ts            theme switching + circular reveal
+    ├── experience.ts  roles — single source of truth
+    ├── projects.ts    projects
+    ├── status.ts      Upcoming / Current / Completed from dates
+    └── site.ts        contact details, copy-email
 ```
 
-Two ideas hold the thing together:
+**Every formation is a pure function of a particle's random seed and a clock.**
+There is no simulation state on the CPU. A morph mixes two formations, staggered
+per particle so it ripples through the cloud. The "hold to pause" works by
+stopping the clock that every formation reads.
 
-**One source of truth per kind of content.** `lib/experience.ts` and
-`lib/projects.ts` feed both the rendered page and the terminal's file system, so
-`cat experience/citi.txt` and the timeline card can never disagree.
+**Scroll drives the story, but never hijacks it.** Native scrolling is untouched.
+Each section boundary adds one formation, morphing over a single viewport
+height centred on the boundary (`world/form.ts`). Long sections hold still, and
+the camera eases toward the target.
 
-**Dates decide status, not hard-coded labels.** A role is Upcoming, Current or
-Completed based on its start and end months compared with today, so the page
-stays accurate without being edited. See `lib/status.ts`.
+**The paper inversion is a post pass,** `paper + ink − colour`, applied channel
+by channel. The background lands exactly on paper, and the shader pre-inverts the
+vermilion so it still reads as vermilion after the flip.
+
+## Robustness
+
+- three.js loads lazily, alongside the display font, after the copy has painted.
+- 26k particles on small or low-core devices, 64k elsewhere. Pixel ratio is
+  capped at 1.75, and drops to 1 automatically if the first seconds after the
+  intro run slow.
+- On portrait screens the camera keeps its horizontal field of view, and
+  formations that sit behind copy are thinned.
+- Without WebGL, the name renders as type and the page works as a plain
+  editorial site.
+- `prefers-reduced-motion` skips the intro, slows the stream, removes the
+  chromatic split and shows all copy immediately.
+- The canvas is `aria-hidden`; every word on the page is real, selectable DOM.
 
 ## Design
 
-The palette is an ANSI terminal theme where colour carries meaning, the way it
-does in a shell: blue for paths and links, amber for the prompt and cursor,
-green for status, red for errors, violet for highlights. Colours are CSS
-variables exposed to Tailwind through `@theme inline`, so utilities like
-`bg-surface` and `text-mute` follow the theme. Both themes meet WCAG AA contrast.
-
-Type is Martian Mono for anything shell-like and Instrument Sans for prose, both
-self-hosted via Fontsource.
-
-Switching themes uses the View Transitions API for a circular reveal from the
-toggle, falling back to an instant swap where that is unsupported or when
-`prefers-reduced-motion` is set. Motion throughout is feedback for what the
-visitor did, not decoration, and it all respects reduced-motion preferences.
-
-## Stack
-
-React 19 · TypeScript · Vite 6 · Tailwind CSS 4 · Framer Motion 12 ·
-Recharts (timeline) · cmdk (command palette) · lucide-react and react-icons
-
-## Credits
-
-- The cursor-following cat is a React port of
-  [oneko.js](https://github.com/adryd325/oneko.js) by adryd, MIT licensed. The
-  sprite sheet (`public/oneko.gif`) comes from that project; a copy of its
-  licence is in [`licenses/`](licenses/oneko.js-LICENSE.txt).
-- The Citi logo is the official mark, via
-  [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Citi.svg).
+Ink `#0b0b0c`, paper `#ebe7df`, one signal colour: vermilion `#ff4b1f`
+(darkened to `#b3300e` on paper for contrast). The type is Instrument Serif for
+display, Instrument Sans for prose and Martian Mono for the HUD, all
+self-hosted via Fontsource. The HUD and cursor use `mix-blend-mode: difference`,
+so they stay legible on ink, on paper and over particles.
 
 ## Contact
 
-- Email: [rathodraj725@gmail.com](mailto:rathodraj725@gmail.com)
+- Email: [rajrathod2323@gmail.com](mailto:rajrathod2323@gmail.com)
 - LinkedIn: [linkedin.com/in/raj-rathod1](https://linkedin.com/in/raj-rathod1)
 - GitHub: [github.com/rajrathod-1](https://github.com/rajrathod-1)
 - LeetCode: [leetcode.com/u/popple_1](https://leetcode.com/u/popple_1)
