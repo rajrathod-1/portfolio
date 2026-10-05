@@ -14,12 +14,14 @@ function Words({ text, from = 0 }: { text: string; from?: number }) {
   ));
 }
 
-function Chapter({ no, name, children }: { no: string; name: string; children: React.ReactNode }) {
+function Chapter({ label, children }: { label?: string; children: React.ReactNode }) {
   return (
     <header className="chapter">
-      <p className="mono label" data-reveal>
-        {no} · {name}
-      </p>
+      {label && (
+        <p className="mono label" data-reveal>
+          {label}
+        </p>
+      )}
       {children}
     </header>
   );
@@ -29,10 +31,11 @@ export function Hero() {
   return (
     <section id="top" className="hero">
       <h1 className="hero-name">Raj Rathod</h1>
-      <p className="mono hero-role intro">Software developer · University of Manitoba</p>
+      <p className="mono hero-role intro">Software developer</p>
       <div className="hero-foot">
         <p className="hero-line intro" style={{ "--i": 1 } as CSSProperties}>
-          Backend systems, event streams, and the quiet machinery in between.
+          Computer science at the University of Manitoba. Previously at Citi, Ericsson and
+          Proofpoint.
         </p>
         <p className="mono status intro" style={{ "--i": 2 } as CSSProperties}>
           <span className="dot" aria-hidden="true" /> {SITE.status}
@@ -56,11 +59,11 @@ const PARTITIONS = [
 export function Stream() {
   return (
     <section id="about" className="stream">
-      <Chapter no="02" name="Stream">
+      <Chapter label="About">
         <h2 className="display" data-reveal="words">
-          <Words text="Most of what I build, you'll never see." />
+          <Words text="I build" />
           <em>
-            <Words text="That's the point." from={8} />
+            <Words text="backend systems." from={2} />
           </em>
         </h2>
       </Chapter>
@@ -99,12 +102,12 @@ export function Offsets() {
   const roles = experienceData.filter((e) => e.file).sort((a, b) => b.year - a.year);
   return (
     <section id="experience" className="offsets">
-      <Chapter no="03" name="Offsets">
+      <Chapter>
         <h2 className="display" data-reveal="words">
-          <Words text="Committed to the log." />
+          <Words text="Experience" />
         </h2>
         <p className="lede" data-reveal>
-          Every role, most recent first. Keep scrolling: you're inside the stream now.
+          Every role, most recent first.
         </p>
       </Chapter>
       {roles.map((role, i) => (
@@ -158,16 +161,12 @@ const shown = [...projects].sort((a, b) => Number(!!b.demo) - Number(!!a.demo));
 export function Matched({ onFocus }: { onFocus: (on: boolean) => void }) {
   return (
     <section id="work" className="matched">
-      <Chapter no="04" name="Matched">
+      <Chapter>
         <h2 className="display" data-reveal="words">
-          <Words text="Built from" />
-          <em>
-            <Words text="first principles." from={2} />
-          </em>
+          <Words text="Projects" />
         </h2>
         <p className="lede" data-reveal>
-          Things I build to understand how they work. Bids from one side, asks from the other,
-          every match a flash.
+          Two have live demos you can try.
         </p>
       </Chapter>
       <ol className="projects">
@@ -226,12 +225,12 @@ export function Ack({ onAck }: { onAck: () => void }) {
   return (
     <section id="contact" className="ack">
       <p className="mono label" data-reveal>
-        05 · Ack
+        Contact
       </p>
       <h2 className="display" data-reveal="words">
-        <Words text="Your message is" />
+        <Words text="Looking for" />
         <em>
-          <Words text="next in the queue." from={3} />
+          <Words text="new grad software roles." from={2} />
         </em>
       </h2>
       <a className="email magnet" href={`mailto:${SITE.email}`} onClick={onAck} data-reveal>
@@ -259,7 +258,6 @@ export function Ack({ onAck }: { onAck: () => void }) {
       </p>
       <footer className="mono colophon">
         <span>© {new Date().getFullYear()} Raj Rathod</span>
-        <span>Offset ∞ · the next one is yours</span>
         <span>Three.js · one shader · ~64k messages</span>
       </footer>
     </section>

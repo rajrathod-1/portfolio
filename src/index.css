@@ -341,8 +341,9 @@ main h3 {
 
 .hero-line {
   margin: 0;
-  max-width: 24ch;
+  max-width: 34ch;
   font: italic 400 clamp(1.5rem, 2.6vw, 2.25rem) / 1.15 var(--serif);
+  text-wrap: balance;
 }
 
 .status {
@@ -616,7 +617,7 @@ details li + li {
 
 .ack .display {
   font-size: clamp(2.5rem, 6vw, 6rem);
-  max-width: 14ch;
+  max-width: 20ch;
 }
 
 .email {

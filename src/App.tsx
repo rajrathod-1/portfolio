@@ -7,7 +7,7 @@ import { Ack, Hero, Matched, Offsets, Stream } from "@/sections";
 const NAV = [
   ["#about", "About"],
   ["#experience", "Experience"],
-  ["#work", "Work"],
+  ["#work", "Projects"],
   ["#contact", "Contact"],
 ];
 

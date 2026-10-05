@@ -44,7 +44,7 @@ for (const tool of ["Spring Boot", "Apache Kafka", "Elasticsearch"]) inHtml(`too
 
 // Order on the page: roles newest first, projects with a live demo first.
 // Company names also appear in the About copy, so only look past the Experience heading.
-const experienceStart = text.indexOf("Committed to the log.");
+const experienceStart = text.indexOf("Every role, most recent first.");
 const at = (needle: string, from = 0) => text.indexOf(needle, from);
 const roleOrder = ["Citi", "Ericsson", "Proofpoint", "Outlier", "UM DevClub"].map((c) => at(c, experienceStart));
 if (experienceStart < 0 || roleOrder.some((pos, i) => pos < 0 || (i > 0 && pos < roleOrder[i - 1])))
