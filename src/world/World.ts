@@ -293,7 +293,10 @@ export class World {
     this.scrollY = y;
     this.velocity = damp(this.velocity, Math.min(v, 4), 6, dt);
     const intro = this.reduced ? 1 : ease(clamp01((now - this.start) / INTRO_MS - 0.22));
-    this.form = damp(this.form, formAt(this.boundaries, y, vh) * intro, 4, dt);
+    // A nav jump lands at once; flying through every chapter on the way (and
+    // flashing through the paper one) reads as lag, so snap instead.
+    const target = formAt(this.boundaries, y, vh) * intro;
+    this.form = Math.abs(target - this.form) > 1.5 ? target : damp(this.form, target, 4, dt);
 
     // The stream clock: runs hot while scrolling, stops while held, rushes on release.
     const speed = this.holding ? 0 : (this.reduced ? 0.3 : 1) * (1 + this.velocity * 0.8) + this.rush;

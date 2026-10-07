@@ -223,7 +223,7 @@ const LINKS = [
 
 export function Ack({ onAck }: { onAck: () => void }) {
   return (
-    <section id="contact" className="ack">
+    <section className="ack">
       <p className="mono label" data-reveal>
         Contact
       </p>
@@ -256,9 +256,12 @@ export function Ack({ onAck }: { onAck: () => void }) {
           Résumé ↓
         </a>
       </p>
-      <footer className="mono colophon">
+      {/* The anchor sits at the very end, so #contact lands where the copy is,
+          not on the empty space above it that the orb needs. */}
+      <footer id="contact" className="mono colophon">
         <span>© {new Date().getFullYear()} Raj Rathod</span>
         <span>Three.js · one shader · ~64k messages</span>
+        <span>Visits are logged with approximate location and device</span>
       </footer>
     </section>
   );

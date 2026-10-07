@@ -29,8 +29,8 @@
   box-sizing: border-box;
 }
 
+/* No smooth scrolling: the page is long, so a nav jump should land at once. */
 html {
-  scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
 }
 
@@ -709,10 +709,6 @@ details li + li {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-
   [data-reveal],
   .w > span,
   .intro {

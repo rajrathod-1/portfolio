@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "node --test src/lib/*.test.ts src/world/*.test.ts",
+    "test": "node --test src/lib/*.test.ts src/world/*.test.ts api/*.test.ts",
     "smoke": "vite build --ssr src/smoke.tsx --outDir ssr-out --logLevel warn && node ssr-out/smoke.js"
   },
   "dependencies": {
