@@ -39,12 +39,22 @@ export const projects: Project[] = [
     title: "Interpreter for a Small Functional Language",
     period: "Aug 2026 - Present",
     summary:
-      "A parser and evaluator with closures, algebraic data types and pattern matching, plus Hindley-Milner type inference.",
+      "A typed functional language with closures, algebraic data types and pattern matching, checked by Hindley-Milner inference before it runs, and running live in the browser on Pyodide.",
     bullets: [
-      "Writing a parser and evaluator for a language with closures, algebraic data types, and pattern matching.",
-      "Adding Hindley-Milner type inference so ill-typed programs are rejected before they run, with errors that point at the offending expression; each example program is checked against its expected output.",
+      "Wrote the lexer, a recursive-descent parser with OCaml's precedence rules, and an interpreter for a language with closures, algebraic data types, pattern matching and let-polymorphism, in about 2,000 lines of dependency-free Python.",
+      "Implemented Hindley-Milner type inference with destructive unification and level-based generalization, rolling back failed unifications so each error shows both types as written and points at the offending expression.",
+      "Added exhaustiveness and unused-case checks with Maranget's usefulness algorithm, which name a concrete value that no case matches, such as Triangle _.",
+      "Ran the evaluator on an explicit stack with proper tail calls, so recursion 100,000 calls deep works past Python's limit of about 1,000 frames; 99 table-driven test cases plus seven example programs checked against expected output, with CI on Python 3.10 to 3.14.",
     ],
-    tags: ["Python"],
+    tags: ["Python", "Pyodide"],
+    demo: {
+      label: "Live demo",
+      href: "https://raj-rathod-mini-ml.vercel.app",
+    },
+    repo: {
+      label: "GitHub",
+      href: "https://github.com/rajrathod-1/mini-ml",
+    },
   },
   {
     id: "rag",
@@ -72,11 +82,21 @@ export const projects: Project[] = [
     title: "TCP Proxy Server",
     period: "Sep 2025 - Dec 2025",
     summary:
-      "A multithreaded Layer 4 proxy on Linux with event-driven I/O, routing, load balancing and per-connection telemetry.",
+      "A multithreaded Layer 4 proxy in C++20 with an epoll event loop per worker, least-connections balancing, retries and ejection of failing backends, and per-connection telemetry, load-tested on Linux.",
     bullets: [
-      "Wrote a multithreaded Layer 4 TCP proxy on Linux handling concurrent connections with event-driven, asynchronous I/O, plus simple routing and load balancing.",
-      "Added per-connection telemetry and tested under sustained load to see where throughput dropped and why.",
+      "Wrote a multithreaded Layer 4 TCP proxy for Linux with one epoll event loop per worker and each connection owned by a single worker, so the data path takes no locks; backpressure comes from interest management, half-close is relayed, and shutdown drains open connections.",
+      "Added round-robin, least-connections and rendezvous-hash balancing, with passive health checks that retry a refused connect on another backend before the client loses a byte and eject the failing backend; with one of three backends killed mid-run, failed requests fell from 273,434 to 10.",
+      "Logged one JSON telemetry line per connection and load-tested with my own load generator to see where throughput dropped and why: one worker relays 250,000 requests a second at 3.9 µs of CPU each, 90% of it in the kernel, and bulk throughput tracks system calls per byte, from 4.5 Gbit/s with 4 KiB buffers to 24 Gbit/s with 16 KiB.",
+      "Showed least connections delivering 15 times the throughput of round robin when one backend is slow, with 36 tests including end-to-end runs on real sockets, CI on Linux and macOS under sanitizers, and the balancer compiled to WebAssembly for a live demo.",
     ],
-    tags: ["C++", "POSIX Sockets", "Linux"],
+    tags: ["C++20", "epoll", "Linux", "CMake", "GoogleTest", "WebAssembly"],
+    demo: {
+      label: "Live demo",
+      href: "https://raj-rathod-tcp-proxy.vercel.app",
+    },
+    repo: {
+      label: "GitHub",
+      href: "https://github.com/rajrathod-1/tcp-proxy",
+    },
   },
 ];
