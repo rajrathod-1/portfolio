@@ -166,7 +166,7 @@ export function Matched({ onFocus }: { onFocus: (on: boolean) => void }) {
           <Words text="Projects" />
         </h2>
         <p className="lede" data-reveal>
-          Two have live demos you can try.
+          Each has a live demo you can try.
         </p>
       </Chapter>
       <ol className="projects">
