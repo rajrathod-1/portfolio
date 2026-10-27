@@ -23,6 +23,4 @@ pnpm-debug.log*
 # Knowledge-graph tooling output (local only)
 graphify-out/
 
-# Claude Code local settings
-.claude/
 tsconfig.tsbuildinfo
